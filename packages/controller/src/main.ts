@@ -8,7 +8,7 @@ import semver from 'semver';
 import restart from '@/lib/restart.js';
 import pidUsage from 'pidusage';
 import deepClone from 'deep-clone';
-import { isDeepStrictEqual, inspect } from 'node:util';
+import { isDeepStrictEqual, inspect, promisify } from 'node:util';
 import { MHServer } from '@/lib/multihostServer.js';
 import {
     tools,
@@ -47,6 +47,7 @@ import {
     getHostObject,
     getDefaultNodeArgs,
     type HostInfo,
+    getWindowsServiceInstallation,
     isAdapterEsmModule,
     isLogLevel,
 } from '@iobroker/js-controller-common-db/tools';
@@ -60,6 +61,7 @@ import { createRequire } from 'node:module';
 const thisDir = url.fileURLToPath(new URL('.', import.meta.url || `file://${__filename}`));
 // eslint-disable-next-line unicorn/prefer-module
 const require = createRequire(import.meta.url || `file://${__filename}`);
+const execFileAsync = promisify(cp.execFile);
 
 type DiagInfoType = 'extended' | 'normal' | 'no-city' | 'none';
 type Dependencies = string[] | Record<string, string>[] | string | Record<string, string>;
@@ -5972,6 +5974,67 @@ async function upgradeOsPackages(packages: UpgradePacket[]): Promise<void> {
 async function startUpgradeManager(options: UpgradeArguments): Promise<void> {
     const { version, adminInstance, uid, gid } = options;
     const upgradeProcessPath = require.resolve('./lib/upgradeManager');
+
+    if (process.platform === 'win32') {
+        const windowsService = getWindowsServiceInstallation();
+        if (!windowsService) {
+            throw new Error('Cannot start controller upgrade: no WinSW service installation found');
+        }
+
+        const daemonDir = path.dirname(windowsService.executable);
+        const helperServiceId = `iob_controller_upgrade_${hostname.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+        const helperConfig = path.join(daemonDir, `${helperServiceId}.xml`);
+        const rootDir = tools.getRootDir();
+        const escapeXml = (value: string | number): string =>
+            String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&apos;');
+        const helperXml = `<service>
+    <id>${escapeXml(helperServiceId)}</id>
+    <name>${escapeXml(`ioBroker controller upgrade (${hostname})`)}</name>
+    <description>Temporary service for an ioBroker js-controller upgrade</description>
+    <executable>${escapeXml(process.execPath)}</executable>
+    <arguments>&quot;${escapeXml(upgradeProcessPath)}&quot; ${escapeXml(version)} ${adminInstance} ${uid} ${gid}</arguments>
+    <workingdirectory>${escapeXml(rootDir)}</workingdirectory>
+    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_SERVICE" value="${escapeXml(helperServiceId)}"/>
+    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_CONFIG" value="${escapeXml(helperConfig)}"/>
+    <env name="IOBROKER_WINDOWS_MAIN_SERVICE_CONFIG" value="${escapeXml(windowsService.config)}"/>
+    <env name="IOBROKER_ROOT_DIR" value="${escapeXml(rootDir)}"/>
+    <log mode="none"/>
+    <stoptimeout>30sec</stoptimeout>
+</service>
+`;
+
+        await fs.writeFile(helperConfig, helperXml, 'utf8');
+        let installed = false;
+
+        try {
+            await execFileAsync(windowsService.executable, ['install', helperConfig, '--no-elevate'], {
+                cwd: daemonDir,
+            });
+            installed = true;
+            await execFileAsync(windowsService.executable, ['start', helperConfig, '--no-elevate'], {
+                cwd: daemonDir,
+            });
+        } catch (e) {
+            if (installed) {
+                try {
+                    await execFileAsync(windowsService.executable, ['uninstall', helperConfig, '--no-elevate'], {
+                        cwd: daemonDir,
+                    });
+                } catch {
+                    // Keep the original error
+                }
+            }
+            await fs.remove(helperConfig);
+            throw e;
+        }
+        return;
+    }
+
     let upgradeProcess: cp.ChildProcess;
 
     const isSystemd = await tools.isIoBrokerInstalledAsSystemd();

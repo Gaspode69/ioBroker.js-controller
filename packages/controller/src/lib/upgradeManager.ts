@@ -1,4 +1,5 @@
 import { type ChildProcessPromise, exec as execAsync } from 'promisify-child-process';
+import { execFile } from 'node:child_process';
 import { tools, logger } from '@iobroker/js-controller-common';
 import { valid } from 'semver';
 import { dbConnectAsync } from '@iobroker/js-controller-cli';
@@ -10,9 +11,31 @@ import type { Logger } from 'winston';
 import fs from 'fs-extra';
 import type { Socket } from 'node:net';
 import type { Duplex } from 'node:stream';
+import { promisify } from 'node:util';
 import url from 'node:url';
 import process from 'node:process';
 
+const execFileAsync = promisify(execFile);
+
+/**
+ * Remove certificate contents and private keys from command output before it is logged or sent to Admin.
+ *
+ * @param output command output
+ */
+export function sanitizeUpgradeOutput(output: string | undefined): string {
+    return String(output || '')
+        .replace(
+            /\{\s*"defaultPrivate"\s*:\s*"(?:\\.|[^"\\])*"\s*,\s*"defaultPublic"\s*:\s*"(?:\\.|[^"\\])*"\s*\}/g,
+            'Certificate configuration updated (certificate contents omitted)',
+        )
+        .replace(
+            /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+            '[REDACTED PRIVATE KEY]',
+        )
+        .replace(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g, '[REDACTED CERTIFICATE]')
+        .replace(/"defaultPrivate"\s*:\s*"(?:\\.|[^"\\])*"/g, '"defaultPrivate": "[REDACTED PRIVATE KEY]"')
+        .replace(/"defaultPublic"\s*:\s*"(?:\\.|[^"\\])*"/g, '"defaultPublic": "[REDACTED CERTIFICATE]"');
+}
 /** The upgrade arguments provided to the constructor of the UpgradeManager */
 export interface UpgradeArguments {
     /** Version of controller to upgrade too */
@@ -51,13 +74,42 @@ interface GetCertificatesParams {
     certPrivateName: string;
 }
 
-interface ServerResponse {
+/** Status returned to Admin while the controller upgrade is running. */
+export interface ServerResponse {
     /** If the update is still running */
     running: boolean;
+    /** Error output collected during the update */
     stderr: string[];
+    /** Standard output collected during the update */
     stdout: string[];
     /** if installation process succeeded */
     success?: boolean;
+}
+
+/**
+ * Send the current upgrade status and invoke the callback only after a final response was flushed.
+ *
+ * @param res HTTP response
+ * @param response current upgrade status
+ * @param onFinalResponse callback after the final response was flushed
+ */
+export function sendUpgradeResponse(
+    res: http.ServerResponse,
+    response: ServerResponse,
+    onFinalResponse: () => void,
+): void {
+    const finalResponse = !response.running;
+    res.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        ...(finalResponse ? { Connection: 'close' } : {}),
+        'Content-Type': 'application/json',
+    });
+
+    if (finalResponse) {
+        res.once('finish', onFinalResponse);
+    }
+
+    res.end(JSON.stringify(response));
 }
 
 class UpgradeManager {
@@ -103,6 +155,10 @@ class UpgradeManager {
      * To prevent commands (including npm) running as root, we apply the passed in gid and uid
      */
     applyUser(): void {
+        if (process.platform === 'win32') {
+            return;
+        }
+
         if (!process.setuid || !process.setgid) {
             const errMessage = 'Cannot ensure user and group ids on this system, because no POSIX platform';
             this.log(errMessage, true);
@@ -170,6 +226,8 @@ class UpgradeManager {
      * @param error if it is an error
      */
     log(message: string, error = false): void {
+        message = sanitizeUpgradeOutput(message);
+
         if (error) {
             this.logger.error(`host.${this.hostname} [CONTROLLER_AUTO_UPGRADE] ${message}`);
             this.response.stderr.push(message);
@@ -186,6 +244,8 @@ class UpgradeManager {
     async stopController(): Promise<void> {
         if (tools.isDocker()) {
             await execAsync('/opt/scripts/maintenance.sh on -kbn');
+        } else if (process.platform === 'win32') {
+            await this.runWindowsServiceCommand('stop');
         } else {
             await execAsync(`${tools.appNameLowerCase} stop`);
         }
@@ -195,12 +255,49 @@ class UpgradeManager {
     /**
      * Starts the js-controller via cli
      */
-    startController(): ChildProcessPromise {
+    startController(): ChildProcessPromise | Promise<void> {
         if (tools.isDocker()) {
             return execAsync('/opt/scripts/maintenance.sh off -y');
         }
-
+        if (process.platform === 'win32') {
+            return this.runWindowsServiceCommand('start');
+        }
         return execAsync(`${tools.appNameLowerCase} start`);
+    }
+
+    /**
+     * Control the main Windows service through the elevated WinSW helper process.
+     *
+     * @param command WinSW command
+     */
+    private async runWindowsServiceCommand(command: 'start' | 'stop'): Promise<void> {
+        const winswExecutable = process.env.WINSW_EXECUTABLE;
+        const mainServiceConfig = process.env.IOBROKER_WINDOWS_MAIN_SERVICE_CONFIG;
+        if (!winswExecutable || !mainServiceConfig) {
+            throw new Error('Cannot control Windows service: WinSW environment is incomplete');
+        }
+
+        await execFileAsync(winswExecutable, [command, mainServiceConfig, '--no-elevate'], {
+            cwd: process.env.IOBROKER_ROOT_DIR,
+        });
+    }
+
+    /**
+     * Remove the temporary Windows helper service and its configuration.
+     */
+    private async cleanupWindowsUpgradeHelper(): Promise<void> {
+        if (process.platform !== 'win32') {
+            return;
+        }
+
+        const helperService = process.env.IOBROKER_WINDOWS_UPGRADE_HELPER_SERVICE;
+        const helperConfig = process.env.IOBROKER_WINDOWS_UPGRADE_HELPER_CONFIG;
+        if (helperService) {
+            await execFileAsync('sc.exe', ['delete', helperService]);
+        }
+        if (helperConfig) {
+            await fs.remove(helperConfig);
+        }
     }
 
     /**
@@ -215,12 +312,23 @@ class UpgradeManager {
      */
     async npmInstall(): Promise<void> {
         const res = await tools.installNodeModule(`iobroker.js-controller@${this.version}`, {
-            cwd: '/opt/iobroker',
+            cwd: process.platform === 'win32' ? process.env.IOBROKER_ROOT_DIR : '/opt/iobroker',
             debug: true,
         });
 
-        this.response.stderr.push(...res.stderr.split('\n'));
-        this.response.stdout.push(...res.stdout.split('\n'));
+        const stderr = sanitizeUpgradeOutput(res.stderr)
+            .split('\n')
+            .filter(line => line.trim());
+        const stdout = sanitizeUpgradeOutput(res.stdout)
+            .split('\n')
+            .filter(line => line.trim());
+
+        this.response.stdout.push(...stdout);
+        if (res.success) {
+            this.response.stdout.push(...stderr.map(line => `[warning] ${line}`));
+        } else {
+            this.response.stderr.push(...stderr);
+        }
 
         this.response.success = res.success;
 
@@ -245,8 +353,10 @@ class UpgradeManager {
 
     /**
      * Shuts down the server, restarts the controller and exits the program
+     *
+     * @param responseSocket Socket used to deliver the final response
      */
-    shutdownApp(): void {
+    shutdownApp(responseSocket?: Socket | Duplex): void {
         if (this.shutdownAbortController) {
             this.shutdownAbortController.abort();
         }
@@ -255,21 +365,31 @@ class UpgradeManager {
             process.exit();
         }
 
-        this.destroySockets();
+        this.destroySockets(responseSocket);
 
         this.server.close(async () => {
-            await this.startController();
-            this.log('Successfully started js-controller');
+            try {
+                await this.startController();
+                this.log('Successfully started js-controller');
+                await this.cleanupWindowsUpgradeHelper();
+            } catch (e) {
+                this.log(`Could not complete upgrade shutdown: ${(e as Error).message}`, true);
+            }
 
             process.exit();
         });
     }
 
     /**
-     * Destroy all sockets, to prevent requests from keeping server alive
+     * Destroy all sockets to prevent requests from keeping the server alive
+     *
+     * @param responseSocket Socket that must stay open until the final response was delivered
      */
-    destroySockets(): void {
+    destroySockets(responseSocket?: Socket | Duplex): void {
         for (const socket of this.sockets) {
+            if (socket === responseSocket) {
+                continue;
+            }
             socket.destroy();
             this.sockets.delete(socket);
         }
@@ -281,16 +401,13 @@ class UpgradeManager {
      * @param res server response
      */
     webServerCallback(res: http.ServerResponse): void {
-        res.writeHead(200, {
-            'Access-Control-Allow-Origin': '*',
+        const responseSocket = res.socket;
+        sendUpgradeResponse(res, this.response, () => {
+            if (!this.response.running) {
+                this.log('Final information delivered');
+                this.shutdownApp(responseSocket ?? undefined);
+            }
         });
-
-        res.end(JSON.stringify(this.response));
-
-        if (!this.response.running) {
-            this.log('Final information delivered');
-            this.shutdownApp();
-        }
     }
 
     /**
