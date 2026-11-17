@@ -1,3 +1,11 @@
+# VERALTET – nicht mit der aktuellen Beta verwenden
+
+Admin und JavaScript aus dem aktuellen Beta-Repository verlangen `js-controller >= 7.2.5`. Dieses ältere 7.2.4-Testpaket ist damit nicht kompatibel und darf für den aktuellen Test nicht mehr verwendet werden.
+
+Aktuelle Anleitung und kompatibles Testpaket:
+
+https://github.com/Gaspode69/ioBroker.js-controller/tree/test/windows-admin-controller-upgrade-v7.2.5-build/test-packages
+
 # Windows Admin controller update test package
 
 This branch is for testing only. It contains a patched js-controller 7.2.4 with the matching patched `@iobroker/js-controller-common-db` bundled inside it. The intended test is an update from this build to the official js-controller 7.2.5 through Admin on Windows.
