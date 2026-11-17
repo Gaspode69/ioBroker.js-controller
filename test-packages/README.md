@@ -7,7 +7,7 @@ This branch is for testing only. It contains a patched js-controller 7.2.4 and t
 Stop ioBroker, open an elevated terminal in the ioBroker installation directory, and install both packages together:
 
 ```powershell
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/test/windows-admin-controller-upgrade-v7.2.4-build/test-packages/dist/iobroker-js-controller-common-db-7.2.4.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/test/windows-admin-controller-upgrade-v7.2.4-build/test-packages/dist/iobroker.js-controller-7.2.4.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/747738072/test-packages/dist/iobroker-js-controller-common-db-7.2.4.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/747738072/test-packages/dist/iobroker.js-controller-7.2.4.tgz"
 ```
 
 Then run the first setup and start ioBroker again:
