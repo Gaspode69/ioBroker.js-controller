@@ -6,7 +6,10 @@ import path from 'node:path';
 
 import fs from 'fs-extra';
 
-import { getWindowsServiceInstallation } from '@iobroker/js-controller-common-db/tools';
+import {
+    getWindowsServiceInstallation,
+    removeNpmAllowScriptsFromEnvironment,
+} from '@iobroker/js-controller-common-db/tools';
 import { sanitizeUpgradeOutput, sendUpgradeResponse } from './upgradeManager.js';
 
 describe('lib/upgradeManager: status response', () => {
@@ -130,5 +133,19 @@ describe('lib/upgradeManager: Windows service detection', () => {
         await fs.writeFile(path.join(daemonDir, 'iob_test.xml'), '<service/>');
 
         assert.strictEqual(getWindowsServiceInstallation(tempDir, {}), undefined);
+    });
+});
+
+describe('lib/upgradeManager: npm environment cleanup', () => {
+    it('removes only both allow-scripts variable spellings', () => {
+        const env = {
+            npm_config_allow_scripts: 'true',
+            NPM_CONFIG_ALLOW_SCRIPTS: 'true',
+            KEEP_ME: 'unchanged',
+        };
+
+        removeNpmAllowScriptsFromEnvironment(env);
+
+        assert.deepStrictEqual(env, { KEEP_ME: 'unchanged' });
     });
 });

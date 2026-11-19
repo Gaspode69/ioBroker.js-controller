@@ -1626,6 +1626,17 @@ export interface InstallNodeModuleOptions {
 }
 
 /**
+ * Remove npm's inherited allow-scripts configuration before a nested project install.
+ *
+ * @param env Environment inherited by the npm subprocess
+ */
+export function removeNpmAllowScriptsFromEnvironment(env: NodeJS.ProcessEnv = process.env): void {
+    // Work around https://github.com/npm/cli/issues/9968
+    delete env.npm_config_allow_scripts;
+    delete env.NPM_CONFIG_ALLOW_SCRIPTS;
+}
+
+/**
  *
  * Figure out which package manager is in charge, but with a fallback to npm.
  *

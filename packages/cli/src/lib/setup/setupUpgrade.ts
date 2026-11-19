@@ -10,6 +10,7 @@ import path from 'node:path';
 import { getRepository, isVersionIgnored } from '@/lib/setup/utils.js';
 import type { Client as ObjectsInRedisClient } from '@iobroker/db-objects-redis';
 import type { Client as StatesInRedisClient } from '@iobroker/db-states-redis';
+import { removeNpmAllowScriptsFromEnvironment } from '@iobroker/js-controller-common-db/tools';
 import type { ProcessExitCallback } from '@/lib/_Types.js';
 import { IoBrokerError } from '@/lib/setup/customError.js';
 import type { ProcessCommandOptions } from '@/lib/cli/cliCommand.js';
@@ -806,6 +807,9 @@ export class Upgrade {
             console.warn(`Controller is running. Please stop ioBroker first.`);
         } else {
             console.log(`Update ${controllerName} from @${installed.common.version} to @${targetVersion}`);
+            if (process.platform === 'win32') {
+                removeNpmAllowScriptsFromEnvironment();
+            }
             // Get the controller from website
             await this.install.downloadPacket(sources, `${controllerName}@${targetVersion}`, {
                 stopDb: true,

@@ -13,7 +13,11 @@ import fs from 'fs-extra';
 import { tools, logger } from '@iobroker/js-controller-common';
 import { dbConnectAsync } from '@iobroker/js-controller-cli';
 import type { Client as ObjectsClient } from '@iobroker/db-objects-redis';
-import { execAsync, execFileAsync } from '@iobroker/js-controller-common-db/tools';
+import {
+    execAsync,
+    execFileAsync,
+    removeNpmAllowScriptsFromEnvironment,
+} from '@iobroker/js-controller-common-db/tools';
 
 /**
  * Remove certificate contents and private keys from command output before it is logged or sent to Admin.
@@ -314,6 +318,9 @@ class UpgradeManager {
      * Install a given version of js-controller
      */
     async npmInstall(): Promise<void> {
+        if (process.platform === 'win32') {
+            removeNpmAllowScriptsFromEnvironment();
+        }
         const res = await tools.installNodeModule(`iobroker.js-controller@${this.version}`, {
             cwd: process.platform === 'win32' ? process.env.IOBROKER_ROOT_DIR : '/opt/iobroker',
             debug: true,
