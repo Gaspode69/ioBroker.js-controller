@@ -4045,7 +4045,8 @@ export function getHostObject(oldObj?: ioBroker.HostObject | null): ioBroker.Hos
         common: {
             name: hostname,
             title: oldObj?.common?.title || ioPackage.common.title,
-            installedVersion: ioPackage.common.version,
+            // Test package only: advertise 7.2.4 so Admin offers the official 7.2.5 update.
+            installedVersion: '7.2.4',
             platform: ioPackage.common.platform,
             cmd: `${process.argv[0]} ${`${process.execArgv.join(' ')} `.replace(/--inspect-brk=\d+ /, '')}${process.argv
                 .slice(1)
