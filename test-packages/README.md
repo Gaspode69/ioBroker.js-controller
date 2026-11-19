@@ -14,7 +14,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/6e914a95/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/64f729834/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/d9d8e496/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/64f729834/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -28,7 +28,7 @@ Nach einem harten Neuladen des Browsers (Strg + F5) unter **Hosts** prüfen:
 - Admin und JavaScript laufen normal;
 - der Updateknopf ist vorhanden.
 
-Das Update über Admin starten. Es sollte die offizielle 7.2.5 installieren, die abschließende Erfolgsmeldung anzeigen und den Dienst wieder starten.
+Das Update über Admin starten. Es sollte die offizielle 7.2.5 installieren, die abschließende Erfolgsmeldung anzeigen und den Dienst wieder starten. Vorübergehende Verbindungsfehler während des Neustarts dürfen nicht als dauerhaft roter Fehler stehen bleiben; sobald der Host wieder die Zielversion meldet, muss der Dialog den erfolgreichen Abschluss anzeigen.
 
 Nach dem erfolgreichen Update ist der js-controller wieder vollständig die offizielle 7.2.5. Der modifizierte Admin 8.3.13 bleibt zunächst installiert.
 
@@ -45,5 +45,5 @@ iob start admin
 
 ```text
 107FD167EF035ED87985FD056FED28904E629523574386229120197DE4269A97  iobroker.js-controller-7.2.5.tgz
-7E6A656E4B67D1A5D9BBFC09F397BCB5B3CB9DAB09DAEA3AF675B8007FC77511  iobroker.admin-8.3.13.tgz
+1100902B7C26D440B19E91A39672119FD039088A1E975FF229CAC3458800477E  iobroker.admin-8.3.13.tgz
 ```
