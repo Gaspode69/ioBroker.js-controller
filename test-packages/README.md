@@ -14,7 +14,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/6ac56d59/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/4c9e19c8c/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/2c3c7643/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/4c9e19c8c/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -45,5 +45,5 @@ iob start admin
 
 ```text
 1B1D342C42981A5E62A41DB17B932317C7A6E327D22D58B2609DE89EF4B73E1E  iobroker.js-controller-7.2.5.tgz
-583320A332F4D24EE215BD0BD1BFF6D1DE418A1D6D417D28196D8AF92FCA05F9  iobroker.admin-8.3.13.tgz
+3C4261B3F80985EC92524C5C65E6B771CB34ECABECCF8932CAB5ED8B595057CA  iobroker.admin-8.3.13.tgz
 ```
