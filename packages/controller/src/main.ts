@@ -1684,6 +1684,10 @@ async function setMeta(): Promise<void> {
         };
     } else {
         newObj = getHostObject(oldObj);
+        // Test package only: advertise 7.2.4 so Admin offers the official 7.2.5 update.
+        // Keeping this override in the controller package ensures that installing the official
+        // controller removes the test behavior together with the test controller itself.
+        newObj.common.installedVersion = '7.2.4';
     }
 
     if (oldObj) {
