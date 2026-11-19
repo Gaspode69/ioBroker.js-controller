@@ -14,7 +14,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/d9d8e496/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/4c9e19c8c/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/6ac56d59/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/4c9e19c8c/test-packages/dist/iobroker.js-controller-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -28,7 +28,7 @@ Nach einem harten Neuladen des Browsers (Strg + F5) unter **Hosts** prüfen:
 - Admin und JavaScript laufen normal;
 - der Updateknopf ist vorhanden.
 
-Das Update über Admin starten. Es sollte die offizielle 7.2.5 installieren, die vollständige abschließende Ausgabe mit Erfolgsmeldung anzeigen und den Dienst wieder starten. Vorübergehende Verbindungsfehler während des Neustarts dürfen nicht als dauerhaft roter Fehler stehen bleiben; sobald der Host wieder die Zielversion meldet, muss der Dialog den erfolgreichen Abschluss anzeigen.
+Das Update über Admin starten. Es sollte die offizielle 7.2.5 installieren, die vollständige abschließende Ausgabe mit Erfolgsmeldung anzeigen und den Dienst wieder starten. Vorübergehende Verbindungsfehler während des Neustarts dürfen weder kurzzeitig noch dauerhaft als roter Fehler erscheinen; sobald der Host wieder die Zielversion meldet, muss der Dialog den erfolgreichen Abschluss anzeigen.
 
 Nach dem erfolgreichen Update ist der js-controller wieder vollständig die offizielle 7.2.5. Der modifizierte Admin 8.3.13 bleibt zunächst installiert.
 
@@ -45,5 +45,5 @@ iob start admin
 
 ```text
 1B1D342C42981A5E62A41DB17B932317C7A6E327D22D58B2609DE89EF4B73E1E  iobroker.js-controller-7.2.5.tgz
-1100902B7C26D440B19E91A39672119FD039088A1E975FF229CAC3458800477E  iobroker.admin-8.3.13.tgz
+583320A332F4D24EE215BD0BD1BFF6D1DE418A1D6D417D28196D8AF92FCA05F9  iobroker.admin-8.3.13.tgz
 ```
