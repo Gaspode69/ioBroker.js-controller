@@ -14,7 +14,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/f00f9c00/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/3a25922c/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -46,5 +46,5 @@ iob start admin
 ```text
 E3C7A67EDC8FBD785FF19AA4BDBEF4624E87F4FD3C3B200A61C948318A33A2F5  iobroker.js-controller-7.2.5.tgz
 ABE96EDEC305C223669A07EC88ADD7B95208E2EC0EF0AE355BA51958106C5BEB  iobroker-js-controller-common-db-7.2.5.tgz
-CC584FA17203F543C28F9E6D42CBEF602D3A1F66F62E422E7866866B7A910DBD  iobroker.admin-8.3.13.tgz
+AF60A4FD49DF4132DFFE59A56F681C2EF0F86AFB71909778F4995EA4B3F587DD  iobroker.admin-8.3.13.tgz
 ```
