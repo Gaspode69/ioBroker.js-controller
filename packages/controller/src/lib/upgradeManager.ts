@@ -17,25 +17,6 @@ import process from 'node:process';
 
 const execFileAsync = promisify(execFile);
 
-/**
- * Remove certificate contents and private keys from command output before it is logged or sent to Admin.
- *
- * @param output command output
- */
-export function sanitizeUpgradeOutput(output: string | undefined): string {
-    return String(output || '')
-        .replace(
-            /\{\s*"defaultPrivate"\s*:\s*"(?:\\.|[^"\\])*"\s*,\s*"defaultPublic"\s*:\s*"(?:\\.|[^"\\])*"\s*\}/g,
-            'Certificate configuration updated (certificate contents omitted)',
-        )
-        .replace(
-            /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
-            '[REDACTED PRIVATE KEY]',
-        )
-        .replace(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g, '[REDACTED CERTIFICATE]')
-        .replace(/"defaultPrivate"\s*:\s*"(?:\\.|[^"\\])*"/g, '"defaultPrivate": "[REDACTED PRIVATE KEY]"')
-        .replace(/"defaultPublic"\s*:\s*"(?:\\.|[^"\\])*"/g, '"defaultPublic": "[REDACTED CERTIFICATE]"');
-}
 /** The upgrade arguments provided to the constructor of the UpgradeManager */
 export interface UpgradeArguments {
     /** Version of controller to upgrade too */
@@ -101,7 +82,8 @@ export function isUpgradeStatusRequest(requestUrl: string | undefined): boolean 
     }
 
     try {
-        return new url.URL(requestUrl, 'http://localhost').pathname === '/controller-upgrade-status';
+        const pathname = new url.URL(requestUrl, 'http://localhost').pathname;
+        return pathname === '/' || pathname === '/controller-upgrade-status';
     } catch {
         return false;
     }
@@ -131,6 +113,32 @@ export function sendUpgradeResponse(
     }
 
     res.end(JSON.stringify(response));
+}
+
+/**
+ * Restart the controller and always clean up the temporary Windows upgrade helper afterwards.
+ *
+ * @param startController restarts the main controller service
+ * @param cleanupWindowsUpgradeHelper removes the temporary helper service
+ * @param log writes progress and errors to the upgrade response
+ */
+export async function restartControllerAndCleanup(
+    startController: () => Promise<unknown>,
+    cleanupWindowsUpgradeHelper: () => Promise<void>,
+    log: (message: string, error?: boolean) => void,
+): Promise<void> {
+    try {
+        await startController();
+        log('Successfully started js-controller');
+    } catch (e) {
+        log(`Could not start js-controller: ${(e as Error).message}`, true);
+    } finally {
+        try {
+            await cleanupWindowsUpgradeHelper();
+        } catch (e) {
+            log(`Could not clean up Windows upgrade helper: ${(e as Error).message}`, true);
+        }
+    }
 }
 
 class UpgradeManager {
@@ -247,8 +255,6 @@ class UpgradeManager {
      * @param error if it is an error
      */
     log(message: string, error = false): void {
-        message = sanitizeUpgradeOutput(message);
-
         if (error) {
             this.logger.error(`host.${this.hostname} [CONTROLLER_AUTO_UPGRADE] ${message}`);
             this.response.stderr.push(message);
@@ -337,10 +343,10 @@ class UpgradeManager {
             debug: true,
         });
 
-        const stderr = sanitizeUpgradeOutput(res.stderr)
+        const stderr = String(res.stderr || '')
             .split('\n')
             .filter(line => line.trim());
-        const stdout = sanitizeUpgradeOutput(res.stdout)
+        const stdout = String(res.stdout || '')
             .split('\n')
             .filter(line => line.trim());
 
@@ -389,13 +395,11 @@ class UpgradeManager {
         this.destroySockets(responseSocket);
 
         this.server.close(async () => {
-            try {
-                await this.startController();
-                this.log('Successfully started js-controller');
-                await this.cleanupWindowsUpgradeHelper();
-            } catch (e) {
-                this.log(`Could not complete upgrade shutdown: ${(e as Error).message}`, true);
-            }
+            await restartControllerAndCleanup(
+                async () => this.startController(),
+                async () => this.cleanupWindowsUpgradeHelper(),
+                (message, error) => this.log(message, error),
+            );
 
             process.exit();
         });
