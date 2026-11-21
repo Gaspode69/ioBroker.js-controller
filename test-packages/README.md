@@ -14,13 +14,15 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/3a25922c/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/c5d04b639/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/3a25922c/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/54890977c/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/54890977c/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
 ```
 
 Der Testcontroller ist technisch Version 7.2.5. Damit bleiben Adapter mit der Anforderung `js-controller >= 7.2.5` lauffähig. Nur für die Hosts-Seite meldet das Controller-Testpaket selbst absichtlich Version 7.2.4, damit Admin das offizielle Update auf 7.2.5 anbietet. Beim Update wird dieses Testpaket vollständig durch den offiziellen Controller ersetzt. Das zusätzlich installierte Common-DB-Featurepaket enthält keine Versionsmanipulation und meldet danach die echte Controller-Version 7.2.5.
+
+Unter Windows wird das Update nur angeboten, wenn der ioBroker-Hauptdienst als WinSW-Dienst unter LocalSystem läuft. Bei Installationen mit dem offiziellen Windows-Installer sollte diese passende Standardkonfiguration vorhanden sein.
 
 Nach einem harten Neuladen des Browsers (Strg + F5) unter **Hosts** prüfen:
 
@@ -44,7 +46,7 @@ iob start admin
 ## SHA-256
 
 ```text
-E3C7A67EDC8FBD785FF19AA4BDBEF4624E87F4FD3C3B200A61C948318A33A2F5  iobroker.js-controller-7.2.5.tgz
-ABE96EDEC305C223669A07EC88ADD7B95208E2EC0EF0AE355BA51958106C5BEB  iobroker-js-controller-common-db-7.2.5.tgz
+69DDC7F89C6ACEE03278DD5674269693891344376E74F49CFFAA0E0BF23B6E1A  iobroker.js-controller-7.2.5.tgz
+B98A8C08415914ADFAABC06609D1D74BAF353957C5E604D5F7BE65F30FCDBB3A  iobroker-js-controller-common-db-7.2.5.tgz
 AF60A4FD49DF4132DFFE59A56F681C2EF0F86AFB71909778F4995EA4B3F587DD  iobroker.admin-8.3.13.tgz
 ```
