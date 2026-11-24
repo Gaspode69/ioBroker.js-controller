@@ -5975,8 +5975,81 @@ async function upgradeOsPackages(packages: UpgradePacket[]): Promise<void> {
  *
  * @param options Arguments passed to the UpgradeManager process
  */
+const WINDOWS_SERVICE_DOES_NOT_EXIST = 1060;
+const WINDOWS_SERVICE_IS_NOT_STARTED = 1062;
+const WINDOWS_HELPER_REMOVAL_RETRIES = 20;
+const WINDOWS_HELPER_REMOVAL_RETRY_DELAY_MS = 250;
+
+function escapeWindowsServiceXml(value: string | number): string {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+}
+
+function isServiceControlError(error: unknown, expectedCode: number): boolean {
+    const candidate = error as { code?: number | string; message?: string };
+    return (
+        Number(candidate?.code) === expectedCode || new RegExp(`\\b${expectedCode}\\b`).test(candidate?.message || '')
+    );
+}
+
+async function removeStaleWindowsUpgradeHelper(serviceId: string, configFile: string): Promise<void> {
+    try {
+        await execFileAsync('sc.exe', ['query', serviceId]);
+    } catch (error) {
+        if (!isServiceControlError(error, WINDOWS_SERVICE_DOES_NOT_EXIST)) {
+            throw error;
+        }
+        await fs.remove(configFile);
+        return;
+    }
+
+    try {
+        await execFileAsync('sc.exe', ['stop', serviceId]);
+    } catch (error) {
+        if (
+            !isServiceControlError(error, WINDOWS_SERVICE_IS_NOT_STARTED) &&
+            !isServiceControlError(error, WINDOWS_SERVICE_DOES_NOT_EXIST)
+        ) {
+            throw error;
+        }
+    }
+
+    try {
+        await execFileAsync('sc.exe', ['delete', serviceId]);
+    } catch (error) {
+        if (!isServiceControlError(error, WINDOWS_SERVICE_DOES_NOT_EXIST)) {
+            throw error;
+        }
+    }
+
+    for (let attempt = 0; attempt < WINDOWS_HELPER_REMOVAL_RETRIES; attempt++) {
+        try {
+            await execFileAsync('sc.exe', ['query', serviceId]);
+        } catch (error) {
+            if (isServiceControlError(error, WINDOWS_SERVICE_DOES_NOT_EXIST)) {
+                await fs.remove(configFile);
+                return;
+            }
+            throw error;
+        }
+        await wait(WINDOWS_HELPER_REMOVAL_RETRY_DELAY_MS);
+    }
+
+    throw new Error(`Could not remove stale Windows upgrade helper service "${serviceId}"`);
+}
+
 async function startUpgradeManager(options: UpgradeArguments): Promise<void> {
     const { version, adminInstance, uid, gid } = options;
+    if (!semver.valid(version)) {
+        throw new Error(`Invalid version "${version}"`);
+    }
+    if (!Number.isInteger(adminInstance) || adminInstance < 0) {
+        throw new Error(`Invalid admin instance "${adminInstance}"`);
+    }
     const upgradeProcessPath = require.resolve('./lib/upgradeManager');
 
     if (process.platform === 'win32') {
@@ -5989,29 +6062,23 @@ async function startUpgradeManager(options: UpgradeArguments): Promise<void> {
         const helperServiceId = `iob_controller_upgrade_${hostname.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
         const helperConfig = path.join(daemonDir, `${helperServiceId}.xml`);
         const rootDir = tools.getRootDir();
-        const escapeXml = (value: string | number): string =>
-            String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&apos;');
         const helperXml = `<service>
-    <id>${escapeXml(helperServiceId)}</id>
-    <name>${escapeXml(`ioBroker controller upgrade (${hostname})`)}</name>
+    <id>${escapeWindowsServiceXml(helperServiceId)}</id>
+    <name>${escapeWindowsServiceXml(`ioBroker controller upgrade (${hostname})`)}</name>
     <description>Temporary service for an ioBroker js-controller upgrade</description>
-    <executable>${escapeXml(process.execPath)}</executable>
-    <arguments>&quot;${escapeXml(upgradeProcessPath)}&quot; ${escapeXml(version)} ${adminInstance} ${uid} ${gid}</arguments>
-    <workingdirectory>${escapeXml(rootDir)}</workingdirectory>
-    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_SERVICE" value="${escapeXml(helperServiceId)}"/>
-    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_CONFIG" value="${escapeXml(helperConfig)}"/>
-    <env name="IOBROKER_WINDOWS_MAIN_SERVICE_CONFIG" value="${escapeXml(windowsService.config)}"/>
-    <env name="IOBROKER_ROOT_DIR" value="${escapeXml(rootDir)}"/>
+    <executable>${escapeWindowsServiceXml(process.execPath)}</executable>
+    <arguments>&quot;${escapeWindowsServiceXml(upgradeProcessPath)}&quot; ${escapeWindowsServiceXml(version)} ${escapeWindowsServiceXml(adminInstance)} ${escapeWindowsServiceXml(uid)} ${escapeWindowsServiceXml(gid)}</arguments>
+    <workingdirectory>${escapeWindowsServiceXml(rootDir)}</workingdirectory>
+    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_SERVICE" value="${escapeWindowsServiceXml(helperServiceId)}"/>
+    <env name="IOBROKER_WINDOWS_UPGRADE_HELPER_CONFIG" value="${escapeWindowsServiceXml(helperConfig)}"/>
+    <env name="IOBROKER_WINDOWS_MAIN_SERVICE_CONFIG" value="${escapeWindowsServiceXml(windowsService.config)}"/>
+    <env name="IOBROKER_ROOT_DIR" value="${escapeWindowsServiceXml(rootDir)}"/>
     <log mode="none"/>
     <stoptimeout>30sec</stoptimeout>
 </service>
 `;
 
+        await removeStaleWindowsUpgradeHelper(helperServiceId, helperConfig);
         await fs.writeFile(helperConfig, helperXml, 'utf8');
         let installed = false;
 
