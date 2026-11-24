@@ -14,7 +14,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/8caa1b1b/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/b0e1b28f6/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/b0e1b28f6/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/8caa1b1b/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/8993d4ba3/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/8993d4ba3/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -44,6 +44,8 @@ Falls `sc.exe create` meldet, dass der Dienst bereits existiert, kann mit dem vo
 
 Das Update über Admin starten. Es sollte die offizielle 7.2.5 installieren, die vollständige abschließende Ausgabe mit Erfolgsmeldung anzeigen und den Dienst wieder starten. Die Erfolgsmeldung am Ende der Ausgabe muss dabei ohne manuelles Nachscrollen sichtbar sein. Vorübergehende Verbindungsfehler während des Neustarts dürfen weder kurzzeitig noch dauerhaft als roter Fehler erscheinen; sobald der Host wieder die Zielversion meldet, muss der Dialog den erfolgreichen Abschluss anzeigen.
 
+Zwischen `Server is running` und der abschließenden Erfolgsmeldung müssen die npm-Ausgaben des Updates sichtbar sein. Nur die Start- und Stop-Meldungen mit einer anschließend vom Admin rekonstruierten Erfolgsmeldung gelten nicht als vollständiger Erfolg dieses Tests.
+
 Danach im weiterhin geöffneten **ioBroker Cmd Window** prüfen:
 
 ```bat
@@ -66,7 +68,7 @@ iob start admin
 ## SHA-256
 
 ```text
-9E1E438A7076B2AB115452E7D84BCE3FEE752B97B090B8FB756763A51ED07C7D  iobroker.js-controller-7.2.5.tgz
+EE8ECE928DD11035E618C033C4446209CEAA77576A276EF263FE4581D5786160  iobroker.js-controller-7.2.5.tgz
 B98A8C08415914ADFAABC06609D1D74BAF353957C5E604D5F7BE65F30FCDBB3A  iobroker-js-controller-common-db-7.2.5.tgz
 47708A3FFADC5758DEDF66FC40EE42588E8F078C3DF2A9BB22BF533E2BC62CF7  iobroker.admin-8.3.13.tgz
 ```
