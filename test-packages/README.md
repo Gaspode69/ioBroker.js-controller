@@ -75,13 +75,16 @@ Danach prüfen:
 
 ```bat
 iob version
+node -p "require('./node_modules/iobroker.js-controller/package.json').version"
 iob status
 sc.exe query "%IOB_UPGRADE_HELPER%"
 ```
 
-`iob version` muss alpha.26 melden. Beim Helper wird Fehler **1060** erwartet, weil er entfernt wurde.
-Die Hosts-Seite muss nun ebenfalls alpha.26 anzeigen, da das offizielle Controller-Paket die
-Testanpassung ersetzt hat. Admin und einige Adapter prüfen.
+Die aus `package.json` gelesene Paketversion muss alpha.26 melden. Die Anzeige von `iob version`
+und der Hosts-Seite kann bei Alpha-Paketen der Version aus `io-package.json` entsprechen (hier 8.0.0).
+Die künstliche Host-Anzeige alpha.25 muss verschwunden sein, da das offizielle Controller-Paket die
+Testanpassung ersetzt hat. Beim Helper wird Fehler **1060** erwartet, weil er entfernt wurde.
+Admin und einige Adapter prüfen.
 
 ## Nach dem Test
 
