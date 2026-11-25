@@ -102,7 +102,7 @@ Neuinstallation der einfachste vollständige Rückweg. Kein In-place-Downgrade a
 
 ## Build und Prüfung
 
-Die Pakete wurden aus diesem Checkout gebaut. `build.mjs` kopiert die Build-Ausgaben in einen temporären
+Die oben bereitgestellten Testpakete wurden aus dem Quellcode dieses Branches erstellt (test/windows-admin-controller-upgrade-current). `build.mjs` kopiert die Build-Ausgaben in einen temporären
 Paketordner und ersetzt interne `file:`-Abhängigkeiten durch die exakte gemeinsame Version.
 `dist/manifest.json` dokumentiert Quellcommit, Version, Archivnamen und SHA-256-Prüfsummen.
 
@@ -113,4 +113,3 @@ npm run test-controller
 node test-packages\build.mjs
 ```
 
-Der vollständige interaktive Windows-Test muss mit diesen Paketen noch durchgeführt werden.
