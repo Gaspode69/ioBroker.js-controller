@@ -1,0 +1,67 @@
+{
+  "source": "57db46b3272505fba0a0f7aeaf17d15d18493d91",
+  "version": "8.0.0-alpha.26-20261124-26d6e1bcd",
+  "advertisedHostVersion": "8.0.0-alpha.25-20261124-86bf1182d",
+  "packages": [
+    {
+      "name": "@iobroker/js-controller-adapter",
+      "filename": "iobroker-js-controller-adapter-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "7f681732e81d3032cbf6cdcb80cadab47593d3137033d4992d49d05a9452dd43"
+    },
+    {
+      "name": "@iobroker/js-controller-cli",
+      "filename": "iobroker-js-controller-cli-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "305fba908508fc045ddecf081695b34e1c99a0440e1abf606adc2e7a913a450f"
+    },
+    {
+      "name": "@iobroker/js-controller-common",
+      "filename": "iobroker-js-controller-common-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "e9366c12a5f81e980b4874886f4f3eb33ab95533b018694e8e65c4fe75b08ffa"
+    },
+    {
+      "name": "@iobroker/js-controller-common-db",
+      "filename": "iobroker-js-controller-common-db-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "e5309a7983f6ab7227e04fe6f5eb315ef0736df8e149d395ab3b75a506d5df62"
+    },
+    {
+      "name": "iobroker.js-controller",
+      "filename": "iobroker.js-controller-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "08205c38931bee6e1a55223f6197433ec344b0b2911364388beb6435602b74a5"
+    },
+    {
+      "name": "@iobroker/db-base",
+      "filename": "iobroker-db-base-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "690df479a34dd4381d0a0d035a07bdc5b7c82bac06c5854607b77cf84e198692"
+    },
+    {
+      "name": "@iobroker/db-objects-file",
+      "filename": "iobroker-db-objects-file-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "9586e842a95add12bfda978fc1bb854d80efbe123546425f72a8e58f966f1495"
+    },
+    {
+      "name": "@iobroker/db-objects-jsonl",
+      "filename": "iobroker-db-objects-jsonl-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "ee2c6969c8312b0b486b432aea93494fe11a0d582701237b534a9b3a7c5977b6"
+    },
+    {
+      "name": "@iobroker/db-objects-redis",
+      "filename": "iobroker-db-objects-redis-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "dd7991e20e95c96690ffa845bcceaa8905aa218df8dc9e2bcf3022babcb8f33f"
+    },
+    {
+      "name": "@iobroker/db-states-file",
+      "filename": "iobroker-db-states-file-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "e00d64392163e8ed7baf554641909242acec6c2684dd512e6900d1ec842bb693"
+    },
+    {
+      "name": "@iobroker/db-states-jsonl",
+      "filename": "iobroker-db-states-jsonl-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "0f2b3098f06f4f4cb347f1d757b52d590858efb6cd6fe6bc2538e11f9ff3f7ba"
+    },
+    {
+      "name": "@iobroker/db-states-redis",
+      "filename": "iobroker-db-states-redis-8.0.0-alpha.26-20261124-26d6e1bcd.tgz",
+      "sha256": "2e2abf3b27e006d9f40b819754e6e9b8a594677b4a42b7469627c435833c3e8e"
+    }
+  ]
+}

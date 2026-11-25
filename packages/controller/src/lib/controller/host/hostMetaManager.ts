@@ -292,6 +292,12 @@ export class HostMetaManager {
             newObj = getHostObject(oldObj);
         }
 
+        // Interactive test only: offer the official alpha.26 as an upgrade in Admin.
+        // Package versions and all upgrade implementation files remain at the reviewed PR version.
+        if (!isCompactGroupController) {
+            newObj.common.installedVersion = '8.0.0-alpha.25-20261124-86bf1182d';
+        }
+
         if (oldObj) {
             // @ts-expect-error todo: can be removed?
             delete oldObj.cmd;
