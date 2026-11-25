@@ -6044,7 +6044,7 @@ async function removeStaleWindowsUpgradeHelper(serviceId: string, configFile: st
 
 async function startUpgradeManager(options: UpgradeArguments): Promise<void> {
     const { version, adminInstance, uid, gid } = options;
-    if (!semver.valid(version)) {
+    if (typeof version !== 'string' || !semver.valid(version)) {
         throw new Error(`Invalid version "${version}"`);
     }
     if (!Number.isInteger(adminInstance) || adminInstance < 0) {

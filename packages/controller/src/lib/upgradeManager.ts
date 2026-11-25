@@ -1,19 +1,21 @@
-import { type ChildProcessPromise, exec as execAsync } from 'promisify-child-process';
-import { execFile } from 'node:child_process';
-import { tools, logger } from '@iobroker/js-controller-common';
-import { valid } from 'semver';
-import { dbConnectAsync } from '@iobroker/js-controller-cli';
 import http from 'node:http';
 import https from 'node:https';
-import type { Client as ObjectsClient } from '@iobroker/db-objects-redis';
 import { setTimeout as wait } from 'node:timers/promises';
-import type { Logger } from 'winston';
-import fs from 'fs-extra';
 import type { Socket } from 'node:net';
 import type { Duplex } from 'node:stream';
-import { promisify } from 'node:util';
 import url from 'node:url';
 import process from 'node:process';
+
+import { valid } from 'semver';
+import type { Logger } from 'winston';
+import fs from 'fs-extra';
+
+import { tools, logger } from '@iobroker/js-controller-common';
+import { dbConnectAsync } from '@iobroker/js-controller-cli';
+import type { Client as ObjectsClient } from '@iobroker/db-objects-redis';
+import { type ChildProcessPromise, exec as execAsync } from 'promisify-child-process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
@@ -21,7 +23,7 @@ const execFileAsync = promisify(execFile);
 export interface UpgradeArguments {
     /** Version of controller to upgrade too */
     version: string;
-    /** Admin instance which triggered the upgrade */
+    /** Admin instance that triggered the upgrade */
     adminInstance: number;
     /** User id the process should run as */
     uid: number;
@@ -63,7 +65,7 @@ export interface ServerResponse {
     stderr: string[];
     /** Standard output collected during the update */
     stdout: string[];
-    /** if installation process succeeded */
+    /** if the installation process succeeded */
     success?: boolean;
 }
 
@@ -194,7 +196,7 @@ class UpgradeManager {
     };
     /** Used to stop the stop shutdown timeout */
     private shutdownAbortController?: AbortController;
-    /** Logger to log to file and other transports */
+    /** Logger to log to a file and other transports */
     private readonly logger: Logger;
 
     /** The server used for communicating upgrade status */
@@ -239,7 +241,7 @@ class UpgradeManager {
     }
 
     /**
-     * Set up the logger, to stream to file and other configured transports
+     * Set up the logger to stream to a file and other configured transports
      */
     private setupLogger(): Logger {
         const config = fs.readJSONSync(tools.getConfigFileName());
@@ -310,13 +312,17 @@ class UpgradeManager {
         } else {
             await execAsync(`${tools.appNameLowerCase} stop`);
         }
+
         await wait(this.STOP_TIMEOUT_MS);
     }
 
     /**
      * Starts the js-controller via cli
      */
-    startController(): ChildProcessPromise | Promise<void> {
+    startController(): ChildProcessPromise | Promise<{
+        stderr?: string;
+        stdout?: string;
+    }> {
         if (tools.isDocker()) {
             return execAsync('/opt/scripts/maintenance.sh off -y');
         }
@@ -331,14 +337,14 @@ class UpgradeManager {
      *
      * @param command WinSW command
      */
-    private async runWindowsServiceCommand(command: 'start' | 'stop'): Promise<void> {
+    private runWindowsServiceCommand(command: 'start' | 'stop'): Promise<{ stderr?: string; stdout?: string }> {
         const winswExecutable = process.env.WINSW_EXECUTABLE;
         const mainServiceConfig = process.env.IOBROKER_WINDOWS_MAIN_SERVICE_CONFIG;
         if (!winswExecutable || !mainServiceConfig) {
             throw new Error('Cannot control Windows service: WinSW environment is incomplete');
         }
 
-        await execFileAsync(winswExecutable, [command, mainServiceConfig, '--no-elevate'], {
+        return execFileAsync(winswExecutable, [command, mainServiceConfig, '--no-elevate'], {
             cwd: process.env.IOBROKER_ROOT_DIR,
         });
     }
@@ -369,7 +375,7 @@ class UpgradeManager {
     }
 
     /**
-     * Install given version of js-controller
+     * Install a given version of js-controller
      */
     async npmInstall(): Promise<void> {
         const res = await tools.installNodeModule(`iobroker.js-controller@${this.version}`, {
@@ -568,7 +574,7 @@ class UpgradeManager {
     }
 
     /**
-     * Collect parameters for webserver from admin instance
+     * Collect parameters for a webserver from an admin instance
      */
     async collectWebServerParameters(): Promise<WebServerParameters> {
         const { objects } = await dbConnectAsync(false);
@@ -603,7 +609,7 @@ class UpgradeManager {
     }
 
     /**
-     * Tells the upgrade manager, that server can be shut down on next response or on timeout
+     * Tells the upgrade manager that the server can be shut down on the next response or on timeout
      */
     async setFinished(): Promise<void> {
         this.response.running = false;
@@ -612,7 +618,7 @@ class UpgradeManager {
     }
 
     /**
-     * Start a timeout which starts controller and shuts down the app if expired
+     * Start a timeout which starts the controller and shuts down the app if expired
      */
     async startShutdownTimeout(): Promise<void> {
         this.shutdownAbortController = new AbortController();
@@ -672,11 +678,11 @@ function registerErrorHandlers(upgradeManager: UpgradeManager): void {
 }
 
 /**
- * This file always needs to be executed in a process different from js-controller
+ * This file always needs to be executed in a process different from js-controller,
  * else it will be canceled when the file itself stops the controller
  */
 // eslint-disable-next-line unicorn/prefer-module
 const modulePath = url.fileURLToPath(import.meta.url || `file://${__filename}`);
 if (process.argv[1] === modulePath) {
-    main();
+    main().catch(e => console.error(`Upgrade failed: ${e.message}`));
 }
