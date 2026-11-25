@@ -4,6 +4,20 @@
 
 ## Ausgangsbasis
 
+### Stand der Testpakete (25.11.2026)
+
+Die Upgrade-Logik wurde mit dem freigegebenen Stand von PR #3637 abgeglichen:
+`57db46b3272505fba0a0f7aeaf17d15d18493d91` einschließlich Bluefox' Master-Merge und Changelog-Eintrag.
+Der PR selbst basiert auf Controller 8. Dieses Testpaket ist eine Rückportierung auf 7.2.5 für den
+interaktiven Update-Test auf die offizielle 7.2.5, kein vollständiger Build des Controller-8-Branches.
+Die Prozessfunktionen und ihre Rückgabetypen bleiben an die 7.2.5-Abhängigkeiten angepasst.
+Die aktuelle Typprüfung der angeforderten Version und die Fehlerausgabe beim Start des Upgrade-Managers
+sind übernommen. Helper-Bereinigung, LocalSystem-Prüfung und Vorrang des dedizierten Status-Endpunkts
+waren bereits enthalten. Das Common-DB-Paket und das Admin-Testpaket bleiben unverändert.
+
+Geprüft: TypeScript-Build aller zwölf Pakete, neun Upgrade-Manager-Tests sowie ESM-/CJS-Syntax.
+Der erneute interaktive Windows-Test steht noch aus.
+
 - aktuelle Beta-Installation von js-controller, Admin und allen installierten Adaptern
 - insbesondere Admin muss unter js-controller 7.2.5 normal laufen
 - empfohlen: vorher ein vollständiges ioBroker-Backup erstellen
@@ -14,7 +28,7 @@ Im Windows-Startmenü das **ioBroker Cmd Window** als Administrator öffnen und 
 
 ```bat
 iob stop
-npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/8caa1b1b/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/8993d4ba3/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/8993d4ba3/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
+npm install --force "https://raw.githubusercontent.com/Gaspode69/ioBroker.admin/8caa1b1b/test-packages/dist/iobroker.admin-8.3.13.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/5865b079e9a17db2fb32bd5aea1a1fe285f77feb/test-packages/dist/iobroker.js-controller-7.2.5.tgz" "https://raw.githubusercontent.com/Gaspode69/ioBroker.js-controller/5865b079e9a17db2fb32bd5aea1a1fe285f77feb/test-packages/dist/iobroker-js-controller-common-db-7.2.5.tgz"
 iob upload admin
 node node_modules\iobroker.js-controller\iobroker.js setup first
 iob start
@@ -68,7 +82,7 @@ iob start admin
 ## SHA-256
 
 ```text
-EE8ECE928DD11035E618C033C4446209CEAA77576A276EF263FE4581D5786160  iobroker.js-controller-7.2.5.tgz
+1B1F1214D3D5B30EEFC7C2D21CA668587A97280C4E2B7DE01A9EF45E0DA588D5  iobroker.js-controller-7.2.5.tgz
 B98A8C08415914ADFAABC06609D1D74BAF353957C5E604D5F7BE65F30FCDBB3A  iobroker-js-controller-common-db-7.2.5.tgz
 47708A3FFADC5758DEDF66FC40EE42588E8F078C3DF2A9BB22BF533E2BC62CF7  iobroker.admin-8.3.13.tgz
 ```
